@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>上海生产活动 POI 交互地图</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #667085;
+      --line: #d0d5dd;
+      --panel: #f8fafc;
+      --red: #9e2a2b;
+      --blue: #2a6f97;
+      --amber: #e09f3e;
+      --green: #52796f;
+      --gray: #8d99ae;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.55;
+      background: #fff;
+    }
+    header {
+      padding: 24px 28px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    h1 { margin: 0 0 6px; font-size: 24px; }
+    header p { margin: 0; color: var(--muted); max-width: 1080px; }
+    main {
+      display: grid;
+      grid-template-columns: minmax(260px, 340px) 1fr;
+      gap: 20px;
+      padding: 20px 28px 28px;
+    }
+    aside {
+      align-self: start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fff;
+    }
+    h2 { margin: 0 0 12px; font-size: 18px; }
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    button:hover { background: var(--panel); }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--blue);
+    }
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .stats {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .links {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 14px;
+    }
+    .links a {
+      display: block;
+      margin: 5px 0;
+      color: #175cd3;
+      text-decoration: none;
+    }
+    .links a:hover { text-decoration: underline; }
+    .map-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 720px;
+    }
+    #map {
+      width: 100%;
+      height: min(82vh, 760px);
+      min-height: 640px;
+      display: block;
+      background:
+        linear-gradient(to right, rgba(152,162,179,.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(152,162,179,.18) 1px, transparent 1px);
+      background-size: 72px 72px;
+    }
+    .tooltip {
+      position: fixed;
+      display: none;
+      pointer-events: none;
+      max-width: 280px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 8px 20px rgba(16,24,40,.14);
+      font-size: 13px;
+      color: var(--ink);
+      z-index: 20;
+    }
+    .note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media (max-width: 880px) {
+      main { grid-template-columns: 1fr; padding: 16px; }
+      header { padding: 20px 16px 12px; }
+      #map { min-height: 560px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>上海生产活动 POI 交互地图</h1>
+    <p>该图读取论文使用的 POI 空间数据。勾选不同类型即可只显示传统制造、城市型生产、城市食品生产、产业/园区空间或难以分类样本。</p>
+  </header>
+
+  <main>
+    <aside>
+      <h2>显示类型</h2>
+      <div class="button-row">
+        <button id="selectAll">全选</button>
+        <button id="clearAll">清空</button>
+        <button id="selectProduction">城市型+食品+园区</button>
+        <button id="selectTraditional">仅传统制造</button>
+      </div>
+      <div id="controls"></div>
+      <div id="stats" class="stats"></div>
+      <div class="links">
+        <strong>其他材料</strong>
+        <a href="index.html">六维参数雷达图</a>
+        <a href="data/poi_spatial.csv">POI 空间数据 CSV</a>
+        <a href="data/poi_classification_audit.csv">分类审计表 CSV</a>
+        <a href="data/amap_poi_raw.csv">原始 POI 数据 CSV</a>
+      </div>
+    </aside>
+
+    <section class="map-panel">
+      <svg id="map" viewBox="0 0 920 760" role="img" aria-label="上海生产活动 POI 交互地图"></svg>
+      <div class="note">注：这是经纬度散点图，不加载商业底图；圆环为论文设定的 8/18km 距人民广场参考圈，非真实环线或行政边界。</div>
+    </section>
+  </main>
+
+  <div id="tooltip" class="tooltip"></div>
+
+  <script>
+    const categoryMeta = {
+      traditional_factory: { label: "传统制造", color: "#9e2a2b" },
+      urban_production: { label: "城市型生产", color: "#2a6f97" },
+      food_city_production: { label: "城市食品生产", color: "#e09f3e" },
+      industrial_space: { label: "产业/园区空间", color: "#52796f" },
+      ambiguous: { label: "难以分类", color: "#8d99ae" },
+    };
+    const categoryOrder = Object.keys(categoryMeta);
+    const centers = [
+      ["人民广场", 121.4737, 31.2304, "star"],
+      ["徐家汇", 121.4368, 31.1885, "diamond"],
+      ["五角场", 121.5147, 31.3039, "diamond"],
+      ["张江", 121.5876, 31.2034, "diamond"],
+      ["虹桥", 121.3205, 31.1949, "diamond"],
+      ["前滩", 121.4732, 31.1524, "diamond"],
+    ];
+    const svg = document.getElementById("map");
+    const tooltip = document.getElementById("tooltip");
+    let rows = [];
+    let scale;
+
+    function parseCsv(text) {
+      const lines = text.replace(/^\uFEFF/, "").trim().split(/\r?\n/);
+      const headers = splitCsvLine(lines.shift());
+      return lines.filter(Boolean).map(line => {
+        const values = splitCsvLine(line);
+        const row = {};
+        headers.forEach((h, i) => row[h] = values[i] ?? "");
+        row.lon = Number(row.lon);
+        row.lat = Number(row.lat);
+        return row;
+      }).filter(row => Number.isFinite(row.lon) && Number.isFinite(row.lat));
+    }
+
+    function splitCsvLine(line) {
+      const out = [];
+      let cur = "", inQuote = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
+          else inQuote = !inQuote;
+        } else if (ch === "," && !inQuote) {
+          out.push(cur);
+          cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+      out.push(cur);
+      return out;
+    }
+
+    function computeScale(data) {
+      const lonVals = data.map(d => d.lon).concat(centers.map(c => c[1]));
+      const latVals = data.map(d => d.lat).concat(centers.map(c => c[2]));
+      const minLon = Math.min(...lonVals), maxLon = Math.max(...lonVals);
+      const minLat = Math.min(...latVals), maxLat = Math.max(...latVals);
+      const padLon = (maxLon - minLon) * 0.05;
+      const padLat = (maxLat - minLat) * 0.08;
+      const left = 52, right = 26, top = 26, bottom = 54;
+      return {
+        minLon: minLon - padLon,
+        maxLon: maxLon + padLon,
+        minLat: minLat - padLat,
+        maxLat: maxLat + padLat,
+        x(lon) { return left + (lon - this.minLon) / (this.maxLon - this.minLon) * (920 - left - right); },
+        y(lat) { return top + (this.maxLat - lat) / (this.maxLat - this.minLat) * (760 - top - bottom); },
+      };
+    }
+
+    function selectedCategories() {
+      return new Set([...document.querySelectorAll("input[data-cat]:checked")].map(el => el.dataset.cat));
+    }
+
+    function svgEl(name, attrs = {}, parent = svg) {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+      Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
+      parent.appendChild(node);
+      return node;
+    }
+
+    function draw() {
+      svg.innerHTML = "";
+      const selected = selectedCategories();
+      const visible = rows.filter(row => selected.has(row.category));
+      drawAxes();
+      drawRings();
+      drawPoints(visible);
+      drawCenters();
+      updateStats(visible);
+    }
+
+    function drawAxes() {
+      const lonTicks = [121.0, 121.2, 121.4, 121.6, 121.8, 122.0];
+      const latTicks = [30.8, 31.0, 31.2, 31.4, 31.6, 31.8];
+      lonTicks.forEach(lon => {
+        const x = scale.x(lon);
+        svgEl("line", { x1: x, y1: 28, x2: x, y2: 706, stroke: "#d0d5dd", "stroke-width": 1 });
+        const t = svgEl("text", { x, y: 732, "text-anchor": "middle", "font-size": 12, fill: "#667085" });
+        t.textContent = lon.toFixed(1);
+      });
+      latTicks.forEach(lat => {
+        const y = scale.y(lat);
+        svgEl("line", { x1: 46, y1: y, x2: 894, y2: y, stroke: "#d0d5dd", "stroke-width": 1 });
+        const t = svgEl("text", { x: 40, y: y + 4, "text-anchor": "end", "font-size": 12, fill: "#667085" });
+        t.textContent = lat.toFixed(1);
+      });
+    }
+
+    function drawRings() {
+      const lon = 121.4737, lat = 31.2304;
+      [[8, "--"], [18, ":"]].forEach(([km, style]) => {
+        const pts = [];
+        for (let b = 0; b <= 360; b += 4) {
+          const p = destPoint(lon, lat, b, km);
+          pts.push(`${scale.x(p[0])},${scale.y(p[1])}`);
+        }
+        svgEl("polyline", {
+          points: pts.join(" "),
+          fill: "none",
+          stroke: "#9e2a2b",
+          "stroke-width": 1.3,
+          "stroke-dasharray": style === "--" ? "6 4" : "2 4",
+          opacity: 0.75,
+        });
+      });
+    }
+
+    function destPoint(lon, lat, bearingDeg, distKm) {
+      const R = 6371.0088;
+      const br = bearingDeg * Math.PI / 180;
+      const ang = distKm / R;
+      const lat1 = lat * Math.PI / 180;
+      const lon1 = lon * Math.PI / 180;
+      const lat2 = Math.asin(Math.sin(lat1) * Math.cos(ang) +
+        Math.cos(lat1) * Math.sin(ang) * Math.cos(br));
+      const lon2 = lon1 + Math.atan2(Math.sin(br) * Math.sin(ang) * Math.cos(lat1),
+        Math.cos(ang) - Math.sin(lat1) * Math.sin(lat2));
+      return [lon2 * 180 / Math.PI, lat2 * 180 / Math.PI];
+    }
+
+    function drawPoints(data) {
+      const g = svgEl("g", { id: "points" });
+      categoryOrder.forEach(cat => {
+        const meta = categoryMeta[cat];
+        data.filter(row => row.category === cat).forEach(row => {
+          const c = svgEl("circle", {
+            cx: scale.x(row.lon),
+            cy: scale.y(row.lat),
+            r: 2.4,
+            fill: meta.color,
+            opacity: 0.46,
+            "data-name": row.name,
+            "data-cat": meta.label,
+            "data-address": row.address,
+          }, g);
+          c.addEventListener("mousemove", showTooltip);
+          c.addEventListener("mouseleave", hideTooltip);
+        });
+      });
+    }
+
+    function drawCenters() {
+      centers.forEach(([name, lon, lat, shape]) => {
+        const x = scale.x(lon), y = scale.y(lat);
+        if (shape === "star") {
+          svgEl("text", { x, y: y + 6, "text-anchor": "middle", "font-size": 26, fill: "#111" }).textContent = "★";
+        } else {
+          svgEl("rect", { x: x - 5, y: y - 5, width: 10, height: 10, fill: "#fff", stroke: "#111", transform: `rotate(45 ${x} ${y})` });
+        }
+        const t = svgEl("text", { x: x + 8, y: y - 7, "font-size": 12, fill: "#111", "paint-order": "stroke", stroke: "white", "stroke-width": 3 });
+        t.textContent = name;
+      });
+    }
+
+    function showTooltip(event) {
+      const node = event.currentTarget;
+      tooltip.innerHTML = `<strong>${escapeHtml(node.dataset.name)}</strong><br>${escapeHtml(node.dataset.cat)}<br>${escapeHtml(node.dataset.address)}`;
+      tooltip.style.left = `${event.clientX + 12}px`;
+      tooltip.style.top = `${event.clientY + 12}px`;
+      tooltip.style.display = "block";
+    }
+
+    function hideTooltip() {
+      tooltip.style.display = "none";
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function updateStats(visible) {
+      const total = rows.length;
+      const byCat = categoryOrder.map(cat => {
+        const n = visible.filter(row => row.category === cat).length;
+        return `${categoryMeta[cat].label}: ${n}`;
+      }).join("<br>");
+      document.getElementById("stats").innerHTML = `当前显示 ${visible.length} / ${total} 个 POI<br>${byCat}`;
+    }
+
+    function initControls() {
+      const controls = document.getElementById("controls");
+      categoryOrder.forEach(cat => {
+        const meta = categoryMeta[cat];
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" data-cat="${cat}" checked><span class="swatch" style="background:${meta.color}"></span>${meta.label}`;
+        controls.appendChild(label);
+      });
+      controls.addEventListener("change", draw);
+      document.getElementById("selectAll").addEventListener("click", () => {
+        document.querySelectorAll("input[data-cat]").forEach(el => el.checked = true);
+        draw();
+      });
+      document.getElementById("clearAll").addEventListener("click", () => {
+        document.querySelectorAll("input[data-cat]").forEach(el => el.checked = false);
+        draw();
+      });
+      document.getElementById("selectProduction").addEventListener("click", () => {
+        const keep = new Set(["urban_production", "food_city_production", "industrial_space"]);
+        document.querySelectorAll("input[data-cat]").forEach(el => el.checked = keep.has(el.dataset.cat));
+        draw();
+      });
+      document.getElementById("selectTraditional").addEventListener("click", () => {
+        document.querySelectorAll("input[data-cat]").forEach(el => el.checked = el.dataset.cat === "traditional_factory");
+        draw();
+      });
+    }
+
+    async function init() {
+      initControls();
+      const res = await fetch("data/poi_spatial.csv");
+      rows = parseCsv(await res.text());
+      scale = computeScale(rows);
+      draw();
+    }
+
+    init().catch(err => {
+      svg.innerHTML = "";
+      const t = svgEl("text", { x: 460, y: 360, "text-anchor": "middle", "font-size": 18, fill: "#667085" });
+      t.textContent = `数据加载失败：${err.message}`;
+    });
+  </script>
+</body>
+</html>

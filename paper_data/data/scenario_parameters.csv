@@ -1,0 +1,5 @@
+﻿scenario,scenario_label_zh,rent_gap,regulation_gap,logistics_gap,congestion_cost,agglo_scale,note
+baseline,基准情景,0.9,0.7,0.6,0.15,1.0,中心区地租、监管、物流成本相对外围有中等差距。
+high_rent,中心地租上升,2.2,0.7,0.6,0.15,1.0,中心区地租差大幅上升，土地密集型活动被进一步挤出。
+clean_tech,低负外部性运营,0.9,0.2,0.45,0.1,1.0,低负外部性运营降低监管、物流和一般拥挤摩擦，但无法消除土地约束。
+remote_work,远程办公削弱协同,0.9,0.7,0.6,0.15,0.55,远程办公削弱部分共址集聚收益，但保留知识溢出与快速迭代收益。
