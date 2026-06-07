@@ -228,19 +228,19 @@ python paper_data/reproduce_poi_figures.py --collect
 - `paper_data/index.html`：行业六维参数雷达图；
 - `paper_data/map.html`：上海 POI 交互地图，可勾选不同生产类型。
 
-可以直接双击 HTML 文件打开，但如果浏览器禁止本地页面读取 CSV，可以在仓库根目录启动一个静态服务器：
+请不要直接双击 HTML 文件打开。浏览器可能阻止读取 CSV 文件并显示 `Failed to fetch`。建议在仓库根目录启动一个静态服务器：
 
 ```powershell
 python -m http.server 8765 --directory paper_data
 ```
 
-然后在浏览器打开：
+如果浏览器访问异常，也可以显式绑定到本机地址：
 
-```text
-http://127.0.0.1:8765/
+```powershell
+python -m http.server 8765 --bind 127.0.0.1 --directory paper_data
 ```
 
-对应页面为：
+然后在浏览器打开：
 
 ```text
 http://127.0.0.1:8765/index.html
