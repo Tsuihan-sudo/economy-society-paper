@@ -1,17 +1,15 @@
-# 课程论文数据与复现材料
+# 课程论文原始数据与复现材料
 
-本仓库用于展示课程论文《城市中心生产活动的集聚阈值与上海 POI 证据》的源码、论文图、POI 数据、交互页面和最小复现代码。
+本项目用于展示课程论文《城市中心生产活动的集聚阈值与上海 POI 证据》的源码、论文图、POI 数据、交互页面和最小复现代码。
 
-仓库不是一个正式经济学实证项目，而是课程论文的可审阅材料。POI 数据来自地图平台自动采集与规则清洗，作用是提供描述性证据，不是企业普查，也不构成因果识别。
-
-## 仓库内容
+## 内容
 
 ```text
 paper.tex
   论文 LaTeX 源码。
 
 figures/
-  论文使用的 PNG 图片。
+  论文使用的图片。
 
 paper_data/
   index.html
@@ -19,7 +17,7 @@ paper_data/
   map.html
     可交互上海 POI 地图，可勾选显示不同生产类型。
   reproduce_poi_figures.py
-    单文件复现代码：获取 POI、清洗分类、生成论文 POI 图。
+    复现代码：获取 POI、清洗分类、生成论文 POI 图。
   data/
     amap_poi_raw.csv
       高德地图返回的原始 POI 数据。
@@ -33,61 +31,113 @@ paper_data/
       理论模型情景参数。
 
 requirements.txt
-  运行单文件复现代码所需的 Python 包。
+  复现代码的运行环境。
 ```
 
 ## 在线页面
-
-如果本仓库启用了 GitHub Pages，并选择 `main` 分支的 `/paper_data` 目录作为发布源，则通常可以访问：
-
-```text
-https://<你的用户名>.github.io/<仓库名>/
-```
-
-其中：
 
 - `index.html` 是可交互雷达图；
 - `map.html` 是可交互 POI 地图；
 - `data/amap_poi_raw.csv` 是原始 POI 数据；
 - `data/poi_classification_audit.csv` 是分类审计表。
 
-## 本地环境准备
+## 复现教程
 
-建议使用 Python 3.10 或更高版本。
+跟随本节内容操作，可以复现论文中使用的所有 POI 相关结果图。
 
-在仓库根目录打开 PowerShell：
+复现有两种方式：
+
+- 使用仓库中已经上传的原始数据复现。这不需要高德 Web 服务 Key，不联网，结果应与论文一致。
+- 申请高德 Key 后重新采集 POI 数据。因为地图平台数据可能会随时间更新，结果不保证与论文完全相同。
+
+### 0. 下载项目
+
+如果熟悉 Git，可以克隆本项目：
 
 ```powershell
-cd D:\Original_F\Vscode\Economy_society
+git clone https://github.com/Tsuihan-sudo/economy-society-paper.git
+cd 项目文件夹
 ```
 
-安装依赖：
+如果不熟悉 Git，也可以在 GitHub 页面点击 `Code` -> `Download ZIP`，解压后进入解压得到的文件夹。
+
+无论使用哪种方式，后续命令都需要在“项目根目录”运行。项目根目录应当能看到这些文件和文件夹：
+
+```text
+README.md
+paper.tex
+requirements.txt
+figures/
+paper_data/
+```
+
+在终端中可以用下面的命令检查当前位置：
+
+```powershell
+dir
+```
+
+macOS 或 Linux 用户可使用：
+
+```bash
+ls
+```
+
+### 1. Python 环境
+
+建议使用 Python 3.10 或更高版本。先检查本机是否已经安装 Python：
+
+```powershell
+python --version
+```
+
+如果提示找不到 `python`，需要先从 Python 官网安装，或使用 Anaconda/Miniconda。安装后重新打开终端再执行上面的命令。
+
+建议创建一个独立虚拟环境，避免影响你电脑上已有的 Python 包：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+如果 PowerShell 提示不允许运行 `Activate.ps1`，可以跳过激活步骤，后续把 `python` 替换为 `.\.venv\Scripts\python.exe` 即可。
+
+如果你使用 macOS 或 Linux，对应命令是：
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+然后安装本项目需要的依赖：
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-依赖很少，只包括：
+依赖只有 `pandas`、`numpy` 和 `matplotlib`。
 
-- `pandas`
-- `numpy`
-- `matplotlib`
+### 2. 用已上传原始数据复现论文图
 
-## 验证方式一：使用已上传原始数据复现
-
-这是最适合老师审阅的方式。它不会重新联网采集，只使用仓库中的 `paper_data/data/amap_poi_raw.csv`，然后重新执行：
+它只读取仓库中的：
 
 ```text
-原始 POI 数据 -> 自动清洗分类 -> 空间变量 -> 论文 POI 图
+paper_data/data/amap_poi_raw.csv
 ```
 
-运行：
+然后重新执行：
+
+```text
+原始 POI 数据 -> 自动清洗分类 -> 计算空间变量 -> 生成论文 POI 图
+```
+
+在仓库根目录运行：
 
 ```powershell
 python paper_data/reproduce_poi_figures.py --use-existing
 ```
 
-成功后会更新：
+运行成功后，程序会重新生成或覆盖以下文件：
 
 ```text
 paper_data/data/poi_classification_audit.csv
@@ -100,71 +150,85 @@ figures/category_by_zone.png
 figures/category_by_nearest_center_zone.png
 ```
 
-如果输出中出现类似下面的数值，说明复现口径与论文当前数据一致：
+其中：
+
+- `poi_classification_audit.csv` 记录每条 POI 的清洗状态、分类结果和分类理由；
+- `poi_spatial.csv` 是清洗后的 POI 数据，并包含单中心距离、多中心距离和距离分组；
+- `figures/` 中的图片是论文正文和附录使用的所有 POI 图。
+
+如果终端输出中出现接近下面的结果，说明复现结果与论文数据一致：
 
 ```text
-清洗后保留: 2756 条
+raw rows: 2801
+clean kept: 2756
 传统制造: 1072
 城市型生产: 476
 城市型生产到人民广场均值: 18.94 km
 传统制造到人民广场均值: 28.16 km
 ```
 
-## 验证方式二：申请自己的高德 Key 并重新采集
+### 3. 重新采集 POI 数据
 
-这一步用于验证采集流程，而不是要求重新得到完全相同的数据。地图平台数据会随时间变化，因此重新采集的 POI 数量可能与论文提交时不同。
+若想要复现论文结果的全过程，可按本小节内容操作。由于地图平台的 POI 数据会不断更新，重新采集得到的数量和论文中的数量可能不同。
 
-### 1. 获取高德 Web 服务 Key
+#### 3.1 申请高德 Web 服务 Key
 
 1. 打开高德开放平台：`https://lbs.amap.com/`
-2. 登录或注册账号。
-3. 进入控制台或应用管理。
+2. 注册或登录账号。
+3. 进入控制台。
 4. 创建一个应用。
-5. 在该应用下添加 Key。
+5. 在应用下添加 Key。
 6. 服务平台选择 `Web 服务`。
-7. 提交后复制得到的 Key。
+7. 复制生成的 Key。
 
-高德官方文档中也说明，创建 Key 时服务平台需要选择 `Web 服务`，Web 服务 API 的请求参数中 `key` 是必填项。
+注意：这里需要的是 `Web 服务` Key，不是 Android、iOS 或 Web 端 JavaScript Key。
 
-### 2. 在本地写入 Key
+#### 3.2 写入本地 `.env`
 
-在仓库根目录新建 `.env` 文件，内容如下：
+在仓库根目录新建一个名为 `.env` 的文件，内容为：
 
 ```text
 AMAP_KEY=这里替换成你的高德Web服务Key
 ```
 
-注意：
+例如：
 
-- 不要把 `.env` 上传到 GitHub。
-- 本仓库的 `.gitignore` 已经忽略 `.env`。
-- 代码只读取 Key，不会把 Key 写入 CSV 或打印到终端。
+```text
+AMAP_KEY=abcdefg1234567890
+```
 
-### 3. 一键重新采集、清洗、出图
+不要把 `.env` 上传到网络。`.env` 只应该保存在你自己的电脑上。代码只读取这个 Key，不会有任何形式的泄露。
 
-运行：
+如果你不想创建 `.env`，也可以在命令中直接传入 Key：
+
+```powershell
+python paper_data/reproduce_poi_figures.py --collect --amap-key 你的高德Web服务Key
+```
+
+#### 3.3 运行重新采集
+
+在仓库根目录运行：
 
 ```powershell
 python paper_data/reproduce_poi_figures.py --collect
 ```
 
-这会执行：
+程序会执行：
 
 ```text
 调用高德 Web 服务 -> 保存原始 POI -> 自动清洗分类 -> 计算空间变量 -> 生成论文 POI 图
 ```
 
-默认是全市关键词检索，和当前上传数据的采集方式一致。若希望按 16 个行政区逐区检索，可运行：
+默认使用论文附录所列举的关键词检索、清洗和分类规则。
 
-```powershell
-python paper_data/reproduce_poi_figures.py --collect --by-district
-```
+### 4. 本地查看交互页面
 
-逐区检索更细，但会消耗更多 API 调用次数，结果也会与论文当前数据不完全相同。
+本项目还提供两个交互页面：
 
-## 交互页面本地查看
+- `paper_data/index.html`：行业六维参数雷达图；
+- `paper_data/map.html`：上海 POI 交互地图，可勾选不同生产类型。
 
-由于浏览器直接打开本地 HTML 时可能限制 `fetch()` 读取 CSV，建议启动一个本地静态服务器：
+可以直接双击 HTML 文件打开，但如果浏览器禁止本地页面读取 CSV，可以在仓库根目录启动一个静态服务器：
 
 ```powershell
 python -m http.server 8765 --directory paper_data
@@ -176,32 +240,10 @@ python -m http.server 8765 --directory paper_data
 http://127.0.0.1:8765/
 ```
 
-雷达图页面：
+对应页面为：
 
 ```text
 http://127.0.0.1:8765/index.html
-```
-
-交互地图：
-
-```text
 http://127.0.0.1:8765/map.html
 ```
-
-## 方法边界
-
-本仓库保留原始数据和分类审计表，是为了让老师可以检查：
-
-- 采集了哪些关键词；
-- 哪些 POI 被过滤；
-- 每条 POI 被归入哪一类；
-- 分类理由是什么；
-- 空间距离如何计算。
-
-但这些数据仍有局限：
-
-- POI 是地图平台样本，不是完整企业名录；
-- 自动分类可能有漏判或误判；
-- 距离圈层是本文人为设定的操作性分组；
-- 图表展示的是描述性空间分布，不是因果识别。
 
